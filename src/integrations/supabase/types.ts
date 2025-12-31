@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      ingredient_prices: {
+        Row: {
+          base_unit: string
+          category_name: string
+          conditioning: number | null
+          created_at: string
+          description: string | null
+          id: string
+          item_code: string
+          price_per_unit: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_unit?: string
+          category_name: string
+          conditioning?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_code: string
+          price_per_unit?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_unit?: string
+          category_name?: string
+          conditioning?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_code?: string
+          price_per_unit?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       recipes: {
         Row: {
           category: string
@@ -21,10 +60,17 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          is_advanced: boolean | null
+          labor_cost: number | null
           markdown_content: string
+          overhead_percent: number | null
+          recipe_ingredients: Json | null
+          target_food_cost_percent: number | null
           title: string
           updated_at: string
           user_id: string
+          yield_quantity: number | null
+          yield_unit: string | null
         }
         Insert: {
           category?: string
@@ -32,10 +78,17 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          is_advanced?: boolean | null
+          labor_cost?: number | null
           markdown_content: string
+          overhead_percent?: number | null
+          recipe_ingredients?: Json | null
+          target_food_cost_percent?: number | null
           title: string
           updated_at?: string
           user_id: string
+          yield_quantity?: number | null
+          yield_unit?: string | null
         }
         Update: {
           category?: string
@@ -43,10 +96,17 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          is_advanced?: boolean | null
+          labor_cost?: number | null
           markdown_content?: string
+          overhead_percent?: number | null
+          recipe_ingredients?: Json | null
+          target_food_cost_percent?: number | null
           title?: string
           updated_at?: string
           user_id?: string
+          yield_quantity?: number | null
+          yield_unit?: string | null
         }
         Relationships: []
       }

@@ -10,6 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useRecipes } from "@/hooks/useRecipes";
 import { parseRecipeMarkdown } from "@/services/RecipeService";
 import { RecipeCategory, RECIPE_CATEGORIES } from "@/models/Recipe";
+import { RecipeIngredient } from "@/models/IngredientPrice";
+import { AdvancedModeToggle } from "@/components/recipe/AdvancedModeToggle";
+import { YieldInput } from "@/components/recipe/YieldInput";
+import { IngredientList } from "@/components/recipe/IngredientList";
+import { ScalingControl } from "@/components/recipe/ScalingControl";
+import { CostingSection } from "@/components/recipe/CostingSection";
+import { PriceListUpload } from "@/components/recipe/PriceListUpload";
 import {
   Select,
   SelectContent,
@@ -84,6 +91,8 @@ export default function CreateRecipe() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createRecipe } = useRecipes();
+  
+  // Basic fields
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState<RecipeCategory>("Mains");
@@ -91,6 +100,18 @@ export default function CreateRecipe() {
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Yield fields
+  const [yieldQuantity, setYieldQuantity] = useState(1);
+  const [yieldUnit, setYieldUnit] = useState("portions");
+  
+  // Advanced mode
+  const [isAdvanced, setIsAdvanced] = useState(false);
+  const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
+  const [multiplier, setMultiplier] = useState(1);
+  const [laborCost, setLaborCost] = useState(0);
+  const [overheadPercent, setOverheadPercent] = useState(0);
+  const [targetFoodCostPercent, setTargetFoodCostPercent] = useState(30);
 
   const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
@@ -175,7 +196,19 @@ export default function CreateRecipe() {
     }
 
     setIsSaving(true);
-    const result = await createRecipe(title, content, category, description);
+    const result = await createRecipe(
+      title, 
+      content, 
+      category, 
+      description,
+      yieldQuantity,
+      yieldUnit,
+      isAdvanced,
+      ingredients,
+      laborCost,
+      overheadPercent,
+      targetFoodCostPercent
+    );
     setIsSaving(false);
 
     if (result) {
@@ -198,7 +231,7 @@ export default function CreateRecipe() {
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground">New Recipe</h1>
               <p className="text-sm text-muted-foreground">
-                Upload or write your recipe
+                {isAdvanced ? "Advanced mode with costing" : "Upload or write your recipe"}
               </p>
             </div>
           </div>
@@ -206,6 +239,9 @@ export default function CreateRecipe() {
 
         {/* Content */}
         <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+          {/* Advanced Mode Toggle */}
+          <AdvancedModeToggle isAdvanced={isAdvanced} onToggle={setIsAdvanced} />
+
           {/* Drop Zone */}
           <GlassCard
             className={`p-8 transition-all duration-200 ${
@@ -282,6 +318,52 @@ export default function CreateRecipe() {
               </SelectContent>
             </Select>
           </GlassCard>
+
+          {/* Yield Input */}
+          <YieldInput
+            quantity={yieldQuantity}
+            unit={yieldUnit}
+            onQuantityChange={setYieldQuantity}
+            onUnitChange={setYieldUnit}
+          />
+
+          {/* Advanced Mode Section */}
+          {isAdvanced && (
+            <div className="space-y-6 pt-4 border-t border-border/20">
+              <h2 className="text-lg font-semibold text-foreground">Advanced Costing</h2>
+              
+              {/* Price List Upload */}
+              <PriceListUpload />
+              
+              {/* Scaling Control */}
+              <ScalingControl
+                multiplier={multiplier}
+                onChange={setMultiplier}
+                baseYield={yieldQuantity}
+                yieldUnit={yieldUnit}
+              />
+              
+              {/* Ingredient List with Pricing */}
+              <IngredientList
+                ingredients={ingredients}
+                onChange={setIngredients}
+                multiplier={multiplier}
+              />
+              
+              {/* Costing Section */}
+              <CostingSection
+                ingredients={ingredients}
+                yieldQuantity={yieldQuantity}
+                multiplier={multiplier}
+                laborCost={laborCost}
+                overheadPercent={overheadPercent}
+                targetFoodCostPercent={targetFoodCostPercent}
+                onLaborCostChange={setLaborCost}
+                onOverheadPercentChange={setOverheadPercent}
+                onTargetFoodCostPercentChange={setTargetFoodCostPercent}
+              />
+            </div>
+          )}
 
           {/* Content Editor */}
           <GlassTextarea

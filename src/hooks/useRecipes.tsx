@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Recipe, RecipeCategory } from "@/models/Recipe";
+import { RecipeIngredient } from "@/models/IngredientPrice";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
 
@@ -38,7 +39,14 @@ export function useRecipes() {
     title: string,
     markdownContent: string,
     category: RecipeCategory,
-    description?: string
+    description?: string,
+    yieldQuantity: number = 1,
+    yieldUnit: string = "portions",
+    isAdvanced: boolean = false,
+    recipeIngredients: RecipeIngredient[] = [],
+    laborCost: number = 0,
+    overheadPercent: number = 0,
+    targetFoodCostPercent: number = 30
   ) => {
     if (!user) {
       toast.error("You must be logged in to create recipes");
@@ -54,6 +62,13 @@ export function useRecipes() {
           markdown_content: markdownContent,
           category,
           description,
+          yield_quantity: yieldQuantity,
+          yield_unit: yieldUnit,
+          is_advanced: isAdvanced,
+          recipe_ingredients: recipeIngredients as any,
+          labor_cost: laborCost,
+          overhead_percent: overheadPercent,
+          target_food_cost_percent: targetFoodCostPercent,
         })
         .select()
         .single();

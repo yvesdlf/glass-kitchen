@@ -25,6 +25,14 @@ export interface Recipe {
   image_url?: string;
   created_at: string;
   updated_at: string;
+  // Advanced fields
+  yield_quantity?: number;
+  yield_unit?: string;
+  is_advanced?: boolean;
+  recipe_ingredients?: any[];
+  labor_cost?: number;
+  overhead_percent?: number;
+  target_food_cost_percent?: number;
 }
 
 export interface Ingredient {
