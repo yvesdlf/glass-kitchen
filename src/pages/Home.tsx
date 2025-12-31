@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { ScreenBackground } from "@/components/ui/ScreenBackground";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useAuth } from "@/hooks/useAuth";
+import { useRecipes } from "@/hooks/useRecipes";
+import { RecipeList } from "@/components/RecipeList";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +15,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const { user, logout } = useAuth();
+  const { recipes, isLoading } = useRecipes();
   const navigate = useNavigate();
   
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Chef";
@@ -60,28 +63,44 @@ export default function Home() {
         </header>
 
         {/* Content */}
-        <main className="max-w-4xl mx-auto px-6 py-12">
-          <GlassCard className="p-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-muted/20 flex items-center justify-center">
-              <BookOpen className="w-10 h-10 text-muted-foreground" />
-            </div>
-            
-            <h2 className="text-xl font-semibold text-foreground mb-3">
-              Your recipe library is empty
-            </h2>
-            
-            <p className="text-muted-foreground max-w-sm mx-auto mb-6">
-              Add your first recipe to get started.
-            </p>
-            
-            <button
-              onClick={() => navigate("/create")}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="h-5 w-5" />
-              Add Recipe
-            </button>
-          </GlassCard>
+        <main className="max-w-4xl mx-auto px-6 py-8">
+          {isLoading ? (
+            <GlassCard className="p-12 text-center animate-pulse">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-muted/20" />
+              <div className="h-6 w-48 mx-auto bg-muted/20 rounded-lg mb-3" />
+              <div className="h-4 w-64 mx-auto bg-muted/20 rounded-lg" />
+            </GlassCard>
+          ) : recipes.length === 0 ? (
+            <GlassCard className="p-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-muted/20 flex items-center justify-center">
+                <BookOpen className="w-10 h-10 text-muted-foreground" />
+              </div>
+              
+              <h2 className="text-xl font-semibold text-foreground mb-3">
+                Your recipe library is empty
+              </h2>
+              
+              <p className="text-muted-foreground max-w-sm mx-auto mb-6">
+                Add your first recipe to get started.
+              </p>
+              
+              <button
+                onClick={() => navigate("/create")}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+                Add Recipe
+              </button>
+            </GlassCard>
+          ) : (
+            <RecipeList 
+              recipes={recipes} 
+              onRecipeClick={(recipe) => {
+                // TODO: Navigate to recipe detail
+                console.log("View recipe:", recipe.id);
+              }}
+            />
+          )}
         </main>
 
         {/* Floating Action Button */}

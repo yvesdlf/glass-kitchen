@@ -7,6 +7,16 @@ import { GlassInput } from "@/components/ui/GlassInput";
 import { GlassTextarea } from "@/components/ui/GlassTextarea";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { useToast } from "@/hooks/use-toast";
+import { useRecipes } from "@/hooks/useRecipes";
+import { parseRecipeMarkdown } from "@/services/RecipeService";
+import { RecipeCategory, RECIPE_CATEGORIES } from "@/models/Recipe";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const RECIPE_TEMPLATE = `# RECIPE TITLE
 
@@ -73,10 +83,14 @@ const RECIPE_TEMPLATE = `# RECIPE TITLE
 export default function CreateRecipe() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { createRecipe } = useRecipes();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [category, setCategory] = useState<RecipeCategory>("Mains");
+  const [description, setDescription] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
@@ -102,11 +116,11 @@ export default function CreateRecipe() {
           setContent(text);
           setFileName(file.name);
           
-          // Try to extract title from markdown
-          const titleMatch = text.match(/^#\s+(.+)$/m);
-          if (titleMatch) {
-            setTitle(titleMatch[1]);
-          }
+          // Parse metadata from markdown
+          const parsed = parseRecipeMarkdown(text);
+          setTitle(parsed.title);
+          setDescription(parsed.description);
+          setCategory(parsed.category);
           
           toast({
             title: "File loaded",
@@ -137,9 +151,11 @@ export default function CreateRecipe() {
     setFileName(null);
     setContent("");
     setTitle("");
+    setDescription("");
+    setCategory("Mains");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       toast({
         title: "Title required",
@@ -158,12 +174,13 @@ export default function CreateRecipe() {
       return;
     }
 
-    // For now, just show success - backend storage will come later
-    toast({
-      title: "Recipe saved",
-      description: `"${title}" has been saved successfully.`,
-    });
-    navigate("/");
+    setIsSaving(true);
+    const result = await createRecipe(title, content, category, description);
+    setIsSaving(false);
+
+    if (result) {
+      navigate("/");
+    }
   };
 
   return (
@@ -250,6 +267,22 @@ export default function CreateRecipe() {
             icon={FileText}
           />
 
+          {/* Category Select */}
+          <GlassCard className="p-1">
+            <Select value={category} onValueChange={(v) => setCategory(v as RecipeCategory)}>
+              <SelectTrigger className="bg-transparent border-0 h-12 text-foreground focus:ring-0 focus:ring-offset-0">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="bg-card/95 backdrop-blur-xl border-border/50">
+                {RECIPE_CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </GlassCard>
+
           {/* Content Editor */}
           <GlassTextarea
             label="Recipe Content (Markdown)"
@@ -268,7 +301,11 @@ export default function CreateRecipe() {
             >
               Cancel
             </PrimaryButton>
-            <PrimaryButton onClick={handleSave} className="flex-1">
+            <PrimaryButton 
+              onClick={handleSave} 
+              className="flex-1"
+              isLoading={isSaving}
+            >
               Save Recipe
             </PrimaryButton>
           </div>
