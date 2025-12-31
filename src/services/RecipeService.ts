@@ -1,53 +1,59 @@
-import { Recipe } from "@/models/Recipe";
+import { Recipe, RecipeCategory } from "@/models/Recipe";
 
-// TODO: Recipe service protocol for future implementation
-// Will handle CRUD operations for recipes, markdown parsing, and photo management
-
-export interface RecipeService {
-  // Get all recipes for the current user
+// Recipe service for CRUD operations
+export interface RecipeServiceInterface {
   getRecipes(): Promise<Recipe[]>;
-  
-  // Get a single recipe by ID
   getRecipe(id: string): Promise<Recipe | null>;
-  
-  // Create a new recipe
-  createRecipe(recipe: Omit<Recipe, "id">): Promise<Recipe>;
-  
-  // Update an existing recipe
-  updateRecipe(id: string, recipe: Partial<Recipe>): Promise<Recipe>;
-  
-  // Delete a recipe
+  createRecipe(recipe: Omit<Recipe, "id" | "created_at" | "updated_at">): Promise<Recipe>;
+  updateRecipe(id: string, recipe: Partial<Recipe>): Promise<Recipe | null>;
   deleteRecipe(id: string): Promise<void>;
-  
-  // TODO: Future methods
-  // parseMarkdownRecipe(markdown: string): Promise<Recipe>;
-  // importFromPhoto(imageFile: File): Promise<Recipe>;
-  // scaleServings(recipeId: string, newServings: number): Promise<Recipe>;
 }
 
-// Placeholder implementation
-export const recipeService: RecipeService = {
-  async getRecipes() {
-    // TODO: Implement with Supabase
-    return [];
-  },
-  
-  async getRecipe(id) {
-    // TODO: Implement with Supabase
-    return null;
-  },
-  
-  async createRecipe(recipe) {
-    // TODO: Implement with Supabase
-    return { ...recipe, id: crypto.randomUUID() };
-  },
-  
-  async updateRecipe(id, recipe) {
-    // TODO: Implement with Supabase
-    return { id, title: recipe.title || "", ...recipe };
-  },
-  
-  async deleteRecipe(id) {
-    // TODO: Implement with Supabase
-  },
-};
+// Helper to extract metadata from markdown
+export function parseRecipeMarkdown(markdown: string): { 
+  title: string; 
+  description: string;
+  category: RecipeCategory;
+} {
+  const lines = markdown.split('\n');
+  let title = 'Untitled Recipe';
+  let description = '';
+  let category: RecipeCategory = 'Mains';
+
+  // Extract title from first # heading
+  for (const line of lines) {
+    if (line.startsWith('# ')) {
+      title = line.replace('# ', '').trim();
+      break;
+    }
+  }
+
+  // Extract description from italic line after title
+  for (const line of lines) {
+    if (line.startsWith('*') && line.endsWith('*') && line.length > 2) {
+      description = line.slice(1, -1).trim();
+      break;
+    }
+  }
+
+  // Extract category from Course field
+  const courseMatch = markdown.match(/\*\*Course:\*\*\s*([^\n]+)/i);
+  if (courseMatch) {
+    const courseValue = courseMatch[1].trim().toLowerCase();
+    if (courseValue.includes('appetizer') || courseValue.includes('starter')) {
+      category = 'Appetiser';
+    } else if (courseValue.includes('crudo') || courseValue.includes('raw')) {
+      category = 'Crudo';
+    } else if (courseValue.includes('salad')) {
+      category = 'Salads';
+    } else if (courseValue.includes('main') || courseValue.includes('entrée')) {
+      category = 'Mains';
+    } else if (courseValue.includes('side')) {
+      category = 'Sides';
+    } else if (courseValue.includes('dessert') || courseValue.includes('sweet')) {
+      category = 'Desserts';
+    }
+  }
+
+  return { title, description, category };
+}
