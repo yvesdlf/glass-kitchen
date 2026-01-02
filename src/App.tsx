@@ -4,9 +4,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import Home from "./pages/Home";
+import AppLayout from "./components/layout/AppLayout";
+import RecipeBook from "./pages/RecipeBook";
+import UploadRecipe from "./pages/UploadRecipe";
+import AdvancedCosting from "./pages/AdvancedCosting";
+import PriceList from "./pages/PriceList";
+import UploadPriceList from "./pages/UploadPriceList";
 import Auth from "./pages/Auth";
-import CreateRecipe from "./pages/CreateRecipe";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,18 +50,16 @@ function AppRoutes() {
         path="/" 
         element={
           <ProtectedRoute>
-            <Home />
+            <AppLayout />
           </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/create" 
-        element={
-          <ProtectedRoute>
-            <CreateRecipe />
-          </ProtectedRoute>
-        } 
-      />
+        }
+      >
+        <Route index element={<RecipeBook />} />
+        <Route path="upload-recipe" element={<UploadRecipe />} />
+        <Route path="advanced-costing" element={<AdvancedCosting />} />
+        <Route path="price-list" element={<PriceList />} />
+        <Route path="upload-price-list" element={<UploadPriceList />} />
+      </Route>
       <Route 
         path="/auth" 
         element={isAuthenticated ? <Navigate to="/" replace /> : <Auth />} 
