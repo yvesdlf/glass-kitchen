@@ -22,10 +22,15 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          initial_weight: number | null
           item_code: string
           price_per_unit: number
+          true_cost: number | null
           updated_at: string
           user_id: string
+          wastage_percent: number | null
+          waste_weight: number | null
+          yield_weight: number | null
         }
         Insert: {
           base_unit?: string
@@ -34,10 +39,15 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          initial_weight?: number | null
           item_code: string
           price_per_unit?: number
+          true_cost?: number | null
           updated_at?: string
           user_id: string
+          wastage_percent?: number | null
+          waste_weight?: number | null
+          yield_weight?: number | null
         }
         Update: {
           base_unit?: string
@@ -46,10 +56,15 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          initial_weight?: number | null
           item_code?: string
           price_per_unit?: number
+          true_cost?: number | null
           updated_at?: string
           user_id?: string
+          wastage_percent?: number | null
+          waste_weight?: number | null
+          yield_weight?: number | null
         }
         Relationships: []
       }

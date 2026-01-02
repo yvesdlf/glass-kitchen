@@ -30,6 +30,11 @@ export function useIngredientPrices() {
         ...item,
         conditioning: Number(item.conditioning),
         price_per_unit: Number(item.price_per_unit),
+        initial_weight: Number(item.initial_weight || 0),
+        waste_weight: Number(item.waste_weight || 0),
+        yield_weight: Number(item.yield_weight || 0),
+        wastage_percent: Number(item.wastage_percent || 0),
+        true_cost: Number(item.true_cost || 0),
       })) as IngredientPrice[];
       
       setPrices(typedData);
@@ -63,6 +68,11 @@ export function useIngredientPrices() {
         ...data,
         conditioning: Number(data.conditioning),
         price_per_unit: Number(data.price_per_unit),
+        initial_weight: Number(data.initial_weight || 0),
+        waste_weight: Number(data.waste_weight || 0),
+        yield_weight: Number(data.yield_weight || 0),
+        wastage_percent: Number(data.wastage_percent || 0),
+        true_cost: Number(data.true_cost || 0),
       } as IngredientPrice;
       
       setPrices((prev) => [...prev, typedData]);
@@ -94,6 +104,11 @@ export function useIngredientPrices() {
         ...data,
         conditioning: Number(data.conditioning),
         price_per_unit: Number(data.price_per_unit),
+        initial_weight: Number(data.initial_weight || 0),
+        waste_weight: Number(data.waste_weight || 0),
+        yield_weight: Number(data.yield_weight || 0),
+        wastage_percent: Number(data.wastage_percent || 0),
+        true_cost: Number(data.true_cost || 0),
       } as IngredientPrice;
       
       setPrices((prev) => prev.map((p) => (p.id === id ? typedData : p)));
@@ -130,7 +145,8 @@ export function useIngredientPrices() {
     }
 
     try {
-      // Parse HTML table to extract ingredient data
+      // Parse HTML table to extract ingredient data matching Excel columns:
+      // Item Category Code | ingrediance Name | Description | Unit Cost | Base Unit of Measure | Conditioning | Initial weight | Waste weight | Yield | Wastage % | True Cost
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlContent, 'text/html');
       const rows = doc.querySelectorAll('tr');
@@ -138,20 +154,40 @@ export function useIngredientPrices() {
       const ingredients: Omit<IngredientPrice, "id" | "user_id" | "created_at" | "updated_at">[] = [];
       
       rows.forEach((row, index) => {
-        // Skip header rows
-        if (index < 2) return;
+        // Skip header rows (first 2 rows typically contain headers)
+        if (index < 1) return;
         
         const cells = row.querySelectorAll('td');
-        if (cells.length >= 7) {
+        if (cells.length >= 6) {
+          // Column mapping from Excel:
+          // 0: Item Category Code
+          // 1: ingrediance Name (category)
+          // 2: Description
+          // 3: Unit Cost
+          // 4: Base Unit of Measure
+          // 5: Conditioning
+          // 6: Initial weight
+          // 7: Waste weight
+          // 8: Yield
+          // 9: Wastage %
+          // 10: True Cost
+          
           const itemCode = cells[0]?.textContent?.trim();
           const categoryName = cells[1]?.textContent?.trim();
           const description = cells[2]?.textContent?.trim();
-          const baseUnit = cells[3]?.textContent?.trim();
-          const conditioning = parseFloat(cells[4]?.textContent?.trim() || '1000');
-          const priceText = cells[6]?.textContent?.trim().replace(/[^0-9.]/g, '');
+          const priceText = cells[3]?.textContent?.trim().replace(/[^0-9.]/g, '');
           const price = parseFloat(priceText || '0');
+          const baseUnit = cells[4]?.textContent?.trim();
+          const conditioning = parseFloat(cells[5]?.textContent?.trim() || '1000');
+          const initialWeight = parseFloat(cells[6]?.textContent?.trim() || '0');
+          const wasteWeight = parseFloat(cells[7]?.textContent?.trim() || '0');
+          const yieldWeight = parseFloat(cells[8]?.textContent?.trim() || '0');
+          const wastagePercentText = cells[9]?.textContent?.trim().replace(/[^0-9.]/g, '');
+          const wastagePercent = parseFloat(wastagePercentText || '0');
+          const trueCostText = cells[10]?.textContent?.trim().replace(/[^0-9.]/g, '');
+          const trueCost = parseFloat(trueCostText || '0');
           
-          if (itemCode && categoryName && !itemCode.includes('#N/A') && categoryName !== '0') {
+          if (itemCode && categoryName && !itemCode.includes('#DIV') && !itemCode.includes('#N/A') && categoryName !== '0') {
             ingredients.push({
               item_code: itemCode,
               category_name: categoryName,
@@ -159,6 +195,11 @@ export function useIngredientPrices() {
               base_unit: baseUnit || 'G',
               conditioning: isNaN(conditioning) ? 1000 : conditioning,
               price_per_unit: isNaN(price) ? 0 : price,
+              initial_weight: isNaN(initialWeight) ? 0 : initialWeight,
+              waste_weight: isNaN(wasteWeight) ? 0 : wasteWeight,
+              yield_weight: isNaN(yieldWeight) ? 0 : yieldWeight,
+              wastage_percent: isNaN(wastagePercent) ? 0 : wastagePercent,
+              true_cost: isNaN(trueCost) ? 0 : trueCost,
             });
           }
         }
