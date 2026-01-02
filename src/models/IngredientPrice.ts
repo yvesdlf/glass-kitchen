@@ -7,6 +7,11 @@ export interface IngredientPrice {
   base_unit: string;
   conditioning: number;
   price_per_unit: number;
+  initial_weight: number;
+  waste_weight: number;
+  yield_weight: number;
+  wastage_percent: number;
+  true_cost: number;
   created_at: string;
   updated_at: string;
 }
@@ -18,6 +23,8 @@ export interface RecipeIngredient {
   unit: string;
   price_per_unit?: number;
   conditioning?: number;
+  wastage_percent?: number;
+  true_cost?: number;
   total_cost?: number;
 }
 

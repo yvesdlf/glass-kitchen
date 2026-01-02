@@ -61,20 +61,26 @@ export function PriceListUpload() {
                 <DialogTitle>Ingredient Price List</DialogTitle>
               </DialogHeader>
               <div className="space-y-2">
-                <div className="grid grid-cols-5 gap-2 text-xs font-medium text-muted-foreground p-2 bg-muted/10 rounded-lg">
+                <div className="grid grid-cols-8 gap-2 text-xs font-medium text-muted-foreground p-2 bg-muted/10 rounded-lg">
                   <span>Code</span>
                   <span>Category</span>
                   <span>Description</span>
                   <span>Unit</span>
-                  <span className="text-right">Price</span>
+                  <span className="text-right">Unit Cost</span>
+                  <span className="text-right">Wastage %</span>
+                  <span className="text-right">True Cost</span>
+                  <span>Cond.</span>
                 </div>
                 {prices.map((price) => (
-                  <div key={price.id} className="grid grid-cols-5 gap-2 text-sm p-2 rounded-lg hover:bg-muted/10">
+                  <div key={price.id} className="grid grid-cols-8 gap-2 text-sm p-2 rounded-lg hover:bg-muted/10">
                     <span className="text-primary font-mono">{price.item_code}</span>
-                    <span className="text-foreground">{price.category_name}</span>
+                    <span className="text-foreground truncate">{price.category_name}</span>
                     <span className="text-muted-foreground truncate">{price.description || '-'}</span>
                     <span className="text-muted-foreground">{price.base_unit}</span>
                     <span className="text-right text-foreground">${price.price_per_unit.toFixed(2)}</span>
+                    <span className="text-right text-foreground">{price.wastage_percent.toFixed(1)}%</span>
+                    <span className="text-right text-primary font-medium">${price.true_cost.toFixed(2)}</span>
+                    <span className="text-muted-foreground">{price.conditioning}</span>
                   </div>
                 ))}
               </div>
