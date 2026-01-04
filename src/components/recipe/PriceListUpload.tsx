@@ -6,7 +6,7 @@ import { useIngredientPrices } from "@/hooks/useIngredientPrices";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export function PriceListUpload() {
-  const { prices, importFromExcel, isLoading } = useIngredientPrices();
+  const { prices, importFromFile, isLoading } = useIngredientPrices();
   const [isDragging, setIsDragging] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [showPriceList, setShowPriceList] = useState(false);
@@ -28,18 +28,18 @@ export function PriceListUpload() {
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      if (file.name.endsWith(".htm") || file.name.endsWith(".html") || file.name.endsWith(".xls") || file.name.endsWith(".xlsx")) {
+      if (
+        file.name.endsWith(".htm") ||
+        file.name.endsWith(".html") ||
+        file.name.endsWith(".xls") ||
+        file.name.endsWith(".xlsx")
+      ) {
         setIsImporting(true);
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-          const text = event.target?.result as string;
-          await importFromExcel(text);
-          setIsImporting(false);
-        };
-        reader.readAsText(file);
+        await importFromFile(file);
+        setIsImporting(false);
       }
     }
-  }, [importFromExcel]);
+  }, [importFromFile]);
 
   return (
     <GlassCard className="p-4 space-y-3">

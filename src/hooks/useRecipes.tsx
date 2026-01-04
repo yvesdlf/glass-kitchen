@@ -6,12 +6,34 @@ import { useAuth } from "./useAuth";
 import { toast } from "sonner";
 
 export function useRecipes() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const ensureSession = async () => {
+    if (!session) return false;
+
+    const { error } = await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    });
+
+    if (error) {
+      toast.error("Session expired. Please sign in again.");
+      return false;
+    }
+
+    return true;
+  };
+
   const fetchRecipes = async () => {
     if (!user) {
+      setRecipes([]);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!(await ensureSession())) {
       setRecipes([]);
       setIsLoading(false);
       return;
@@ -53,6 +75,10 @@ export function useRecipes() {
       return null;
     }
 
+    if (!(await ensureSession())) {
+      return null;
+    }
+
     try {
       const { data, error } = await supabase
         .from("recipes")
@@ -86,6 +112,8 @@ export function useRecipes() {
   };
 
   const deleteRecipe = async (id: string) => {
+    if (!(await ensureSession())) return;
+
     try {
       const { error } = await supabase
         .from("recipes")
