@@ -360,6 +360,17 @@ export function useIngredientPrices() {
     fetchPrices();
   }, [user]);
 
+  // Generate next sequential code
+  const getNextCode = () => {
+    const existingCodes = prices
+      .map((p) => p.item_code)
+      .filter((code) => /^ING-\d+$/.test(code))
+      .map((code) => parseInt(code.replace("ING-", ""), 10));
+    
+    const maxCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
+    return `ING-${String(maxCode + 1).padStart(4, "0")}`;
+  };
+
   return {
     prices,
     isLoading,
@@ -368,5 +379,6 @@ export function useIngredientPrices() {
     deletePrice,
     importFromFile,
     refetch: fetchPrices,
+    getNextCode,
   };
 }
