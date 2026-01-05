@@ -133,19 +133,38 @@ export default function CreateRecipe() {
       if (file.name.endsWith(".md") || file.name.endsWith(".txt")) {
         const reader = new FileReader();
         reader.onload = (event) => {
-          const text = event.target?.result as string;
-          setContent(text);
-          setFileName(file.name);
-          
-          // Parse metadata from markdown
-          const parsed = parseRecipeMarkdown(text);
-          setTitle(parsed.title);
-          setDescription(parsed.description);
-          setCategory(parsed.category);
-          
+          try {
+            const text = event.target?.result as string;
+            if (!text) {
+              throw new Error("File is empty");
+            }
+            setContent(text);
+            setFileName(file.name);
+            
+            // Parse metadata from markdown
+            const parsed = parseRecipeMarkdown(text);
+            setTitle(parsed.title);
+            setDescription(parsed.description);
+            setCategory(parsed.category);
+            
+            toast({
+              title: "File loaded",
+              description: `${file.name} has been imported successfully.`,
+            });
+          } catch (error) {
+            console.error("Error reading file:", error);
+            toast({
+              title: "Error loading file",
+              description: error instanceof Error ? error.message : "Failed to read file content.",
+              variant: "destructive",
+            });
+          }
+        };
+        reader.onerror = () => {
           toast({
-            title: "File loaded",
-            description: `${file.name} has been imported successfully.`,
+            title: "Error reading file",
+            description: "Failed to read the file. Please try again.",
+            variant: "destructive",
           });
         };
         reader.readAsText(file);

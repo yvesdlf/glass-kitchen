@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { BookOpen, Plus, TrendingUp, Clock, ChefHat } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -9,20 +9,38 @@ import { SearchBar } from "@/components/ui/SearchBar";
 
 export default function RecipeBook() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const { recipes, isLoading } = useRecipes();
   const navigate = useNavigate();
 
-  // Filter recipes based on search
+  // Debounce search query to avoid excessive filtering
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Filter recipes based on search - memoized for performance
   const filteredRecipes = useMemo(() => {
-    if (!searchQuery.trim()) return recipes;
-    const query = searchQuery.toLowerCase();
+    if (!debouncedSearchQuery.trim()) return recipes;
+    const query = debouncedSearchQuery.toLowerCase();
     return recipes.filter(
       (r) =>
         r.title.toLowerCase().includes(query) ||
         r.category.toLowerCase().includes(query) ||
         (r.description?.toLowerCase().includes(query) ?? false)
     );
-  }, [recipes, searchQuery]);
+  }, [recipes, debouncedSearchQuery]);
+
+  // Memoize metrics calculation
+  const metrics = useMemo(() => {
+    const totalRecipes = recipes.length;
+    const advancedRecipes = recipes.filter(r => r.is_advanced).length;
+    const categoriesCount = [...new Set(recipes.map(r => r.category))].length;
+    return { totalRecipes, advancedRecipes, categoriesCount };
+  }, [recipes]);
 
   if (isLoading) {
     return (
@@ -65,32 +83,27 @@ export default function RecipeBook() {
     );
   }
 
-  // Calculate metrics
-  const totalRecipes = recipes.length;
-  const advancedRecipes = recipes.filter(r => r.is_advanced).length;
-  const categoriesCount = [...new Set(recipes.map(r => r.category))].length;
-
   return (
     <div className="space-y-6">
       {/* Dashboard Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Total Recipes"
-          value={totalRecipes}
+          value={metrics.totalRecipes}
           subtitle="In your library"
           icon={BookOpen}
           variant="primary"
         />
         <MetricCard
           title="With Costing"
-          value={advancedRecipes}
-          subtitle={`${totalRecipes > 0 ? ((advancedRecipes / totalRecipes) * 100).toFixed(0) : 0}% have pricing`}
+          value={metrics.advancedRecipes}
+          subtitle={`${metrics.totalRecipes > 0 ? ((metrics.advancedRecipes / metrics.totalRecipes) * 100).toFixed(0) : 0}% have pricing`}
           icon={TrendingUp}
           variant="accent"
         />
         <MetricCard
           title="Categories"
-          value={categoriesCount}
+          value={metrics.categoriesCount}
           subtitle="Recipe groups"
           icon={Clock}
         />
@@ -105,15 +118,16 @@ export default function RecipeBook() {
       />
 
       {/* Recipe List */}
-      {filteredRecipes.length === 0 && searchQuery ? (
+      {filteredRecipes.length === 0 && debouncedSearchQuery ? (
         <GlassCard className="p-8 text-center">
-          <p className="text-muted-foreground">No recipes match "{searchQuery}"</p>
+          <p className="text-muted-foreground">No recipes match "{debouncedSearchQuery}"</p>
         </GlassCard>
       ) : (
         <RecipeList 
           recipes={filteredRecipes} 
           onRecipeClick={(recipe) => {
-            console.log("View recipe:", recipe.id);
+            // TODO: Navigate to recipe detail page when implemented
+            // navigate(`/recipe/${recipe.id}`);
           }}
         />
       )}

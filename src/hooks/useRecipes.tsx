@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Recipe, RecipeCategory } from "@/models/Recipe";
 import { RecipeIngredient } from "@/models/IngredientPrice";
@@ -10,7 +10,7 @@ export function useRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const ensureSession = async () => {
+  const ensureSession = useCallback(async () => {
     if (!session) return false;
 
     const { error } = await supabase.auth.setSession({
@@ -24,9 +24,9 @@ export function useRecipes() {
     }
 
     return true;
-  };
+  }, [session]);
 
-  const fetchRecipes = async () => {
+  const fetchRecipes = useCallback(async () => {
     if (!user) {
       setRecipes([]);
       setIsLoading(false);
@@ -55,7 +55,7 @@ export function useRecipes() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, ensureSession]);
 
   const createRecipe = async (
     title: string,
@@ -132,7 +132,7 @@ export function useRecipes() {
 
   useEffect(() => {
     fetchRecipes();
-  }, [user]);
+  }, [fetchRecipes]);
 
   return {
     recipes,

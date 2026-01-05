@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,8 +13,6 @@ import PriceList from "./pages/PriceList";
 import UploadPriceList from "./pages/UploadPriceList";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -69,18 +68,35 @@ function AppRoutes() {
   );
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Create QueryClient once to avoid recreating on every render
+  const queryClient = useMemo(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+            staleTime: 5 * 60 * 1000, // 5 minutes
+          },
+        },
+      }),
+    []
+  );
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

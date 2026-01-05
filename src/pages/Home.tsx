@@ -96,8 +96,8 @@ export default function Home() {
             <RecipeList 
               recipes={recipes} 
               onRecipeClick={(recipe) => {
-                // TODO: Navigate to recipe detail
-                console.log("View recipe:", recipe.id);
+                // TODO: Navigate to recipe detail page when implemented
+                // navigate(`/recipe/${recipe.id}`);
               }}
             />
           )}

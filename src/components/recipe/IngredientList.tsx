@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Plus, Trash2, DollarSign } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GlassInput } from "@/components/ui/GlassInput";
@@ -20,8 +20,14 @@ export function IngredientList({ ingredients, onChange, multiplier }: Ingredient
     conditioning: 1000,
   });
 
-  const addIngredient = () => {
-    if (!newIngredient.name || !newIngredient.quantity) return;
+  const calculateCost = useCallback((quantity: number, pricePerUnit: number, conditioning: number) => {
+    if (!pricePerUnit || !conditioning || conditioning <= 0) return 0;
+    if (quantity <= 0) return 0;
+    return (quantity / conditioning) * pricePerUnit;
+  }, []);
+
+  const addIngredient = useCallback(() => {
+    if (!newIngredient.name || !newIngredient.quantity || newIngredient.quantity <= 0) return;
     
     const ingredient: RecipeIngredient = {
       id: crypto.randomUUID(),
@@ -35,13 +41,13 @@ export function IngredientList({ ingredients, onChange, multiplier }: Ingredient
     
     onChange([...ingredients, ingredient]);
     setNewIngredient({ name: '', quantity: 0, unit: 'g', price_per_unit: 0, conditioning: 1000 });
-  };
+  }, [newIngredient, ingredients, onChange, calculateCost]);
 
-  const removeIngredient = (id: string) => {
+  const removeIngredient = useCallback((id: string) => {
     onChange(ingredients.filter(ing => ing.id !== id));
-  };
+  }, [ingredients, onChange]);
 
-  const updateIngredient = (id: string, updates: Partial<RecipeIngredient>) => {
+  const updateIngredient = useCallback((id: string, updates: Partial<RecipeIngredient>) => {
     onChange(ingredients.map(ing => {
       if (ing.id === id) {
         const updated = { ...ing, ...updates };
@@ -50,20 +56,15 @@ export function IngredientList({ ingredients, onChange, multiplier }: Ingredient
       }
       return ing;
     }));
-  };
+  }, [ingredients, onChange, calculateCost]);
 
-  const calculateCost = (quantity: number, pricePerUnit: number, conditioning: number) => {
-    if (!pricePerUnit || !conditioning) return 0;
-    return (quantity / conditioning) * pricePerUnit;
-  };
-
-  const getScaledQuantity = (quantity: number) => {
+  const getScaledQuantity = useCallback((quantity: number) => {
     return (quantity * multiplier).toFixed(1);
-  };
+  }, [multiplier]);
 
-  const getTotalCost = () => {
+  const totalCost = useMemo(() => {
     return ingredients.reduce((sum, ing) => sum + (ing.total_cost || 0), 0) * multiplier;
-  };
+  }, [ingredients, multiplier]);
 
   return (
     <GlassCard className="p-4 space-y-4">
@@ -201,7 +202,7 @@ export function IngredientList({ ingredients, onChange, multiplier }: Ingredient
       {ingredients.length > 0 && (
         <div className="flex justify-between items-center pt-3 border-t border-border/20">
           <span className="font-medium text-muted-foreground">Total Ingredient Cost:</span>
-          <span className="text-lg font-bold text-primary">${getTotalCost().toFixed(2)}</span>
+          <span className="text-lg font-bold text-primary">${totalCost.toFixed(2)}</span>
         </div>
       )}
     </GlassCard>

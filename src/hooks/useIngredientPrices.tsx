@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { IngredientPrice } from "@/models/IngredientPrice";
@@ -10,7 +10,7 @@ export function useIngredientPrices() {
   const [prices, setPrices] = useState<IngredientPrice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const ensureSession = async () => {
+  const ensureSession = useCallback(async () => {
     if (!session) return false;
 
     const { error } = await supabase.auth.setSession({
@@ -24,7 +24,7 @@ export function useIngredientPrices() {
     }
 
     return true;
-  };
+  }, [session]);
 
   const readFileAsText = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -60,7 +60,7 @@ export function useIngredientPrices() {
     return unitCost / yieldFactor;
   };
 
-  const fetchPrices = async () => {
+  const fetchPrices = useCallback(async () => {
     if (!user) {
       setPrices([]);
       setIsLoading(false);
@@ -101,7 +101,7 @@ export function useIngredientPrices() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, ensureSession]);
 
   const addPrice = async (price: Omit<IngredientPrice, "id" | "user_id" | "created_at" | "updated_at">) => {
     if (!user) {
@@ -358,10 +358,10 @@ export function useIngredientPrices() {
 
   useEffect(() => {
     fetchPrices();
-  }, [user]);
+  }, [fetchPrices]);
 
-  // Generate next sequential code
-  const getNextCode = () => {
+  // Generate next sequential code - memoized for performance
+  const getNextCode = useCallback(() => {
     const existingCodes = prices
       .map((p) => p.item_code)
       .filter((code) => /^ING-\d+$/.test(code))
@@ -369,7 +369,7 @@ export function useIngredientPrices() {
     
     const maxCode = existingCodes.length > 0 ? Math.max(...existingCodes) : 0;
     return `ING-${String(maxCode + 1).padStart(4, "0")}`;
-  };
+  }, [prices]);
 
   return {
     prices,

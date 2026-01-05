@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Recipe, RecipeCategory, RECIPE_CATEGORIES } from "@/models/Recipe";
 import { RecipeCard } from "./RecipeCard";
 
@@ -7,10 +8,12 @@ interface RecipeListProps {
 }
 
 export function RecipeList({ recipes, onRecipeClick }: RecipeListProps) {
-  const recipesByCategory = RECIPE_CATEGORIES.reduce((acc, category) => {
-    acc[category] = recipes.filter(r => r.category === category);
-    return acc;
-  }, {} as Record<RecipeCategory, Recipe[]>);
+  const recipesByCategory = useMemo(() => {
+    return RECIPE_CATEGORIES.reduce((acc, category) => {
+      acc[category] = recipes.filter(r => r.category === category);
+      return acc;
+    }, {} as Record<RecipeCategory, Recipe[]>);
+  }, [recipes]);
 
   const hasRecipes = recipes.length > 0;
 
