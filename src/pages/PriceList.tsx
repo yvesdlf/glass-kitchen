@@ -1,9 +1,12 @@
-import { List, Package, DollarSign, Percent, TrendingUp, Scale } from "lucide-react";
+import { useState, useMemo } from "react";
+import { List, Package, DollarSign, TrendingUp, Scale } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useIngredientPrices } from "@/hooks/useIngredientPrices";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { WastageIndicator } from "@/components/dashboard/WastageIndicator";
 import { FoodCostChart } from "@/components/dashboard/FoodCostChart";
+import { ManualIngredientForm } from "@/components/price-list/ManualIngredientForm";
+import { SearchBar } from "@/components/ui/SearchBar";
 import {
   Table,
   TableBody,
@@ -16,7 +19,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 
 export default function PriceList() {
-  const { prices, isLoading } = useIngredientPrices();
+  const [searchQuery, setSearchQuery] = useState("");
+  const { prices, isLoading, addPrice, getNextCode } = useIngredientPrices();
+
+  // Filter prices based on search
+  const filteredPrices = useMemo(() => {
+    if (!searchQuery.trim()) return prices;
+    const query = searchQuery.toLowerCase();
+    return prices.filter(
+      (p) =>
+        p.item_code.toLowerCase().includes(query) ||
+        p.category_name.toLowerCase().includes(query) ||
+        (p.description?.toLowerCase().includes(query) ?? false)
+    );
+  }, [prices, searchQuery]);
 
   // Calculate dashboard metrics
   const totalItems = prices.length;
@@ -60,19 +76,24 @@ export default function PriceList() {
     );
   }
 
+  const nextCode = getNextCode();
+
   if (prices.length === 0) {
     return (
-      <GlassCard className="p-12 text-center">
-        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-muted/20 flex items-center justify-center">
-          <Package className="w-10 h-10 text-muted-foreground" />
-        </div>
-        <h2 className="text-xl font-semibold text-foreground mb-3">
-          No ingredients in price list
-        </h2>
-        <p className="text-muted-foreground max-w-sm mx-auto">
-          Upload a price list to see your inventory insights here.
-        </p>
-      </GlassCard>
+      <div className="space-y-6">
+        <ManualIngredientForm onAdd={addPrice} nextCode={nextCode} />
+        <GlassCard className="p-12 text-center">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-muted/20 flex items-center justify-center">
+            <Package className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h2 className="text-xl font-semibold text-foreground mb-3">
+            No ingredients in price list
+          </h2>
+          <p className="text-muted-foreground max-w-sm mx-auto">
+            Add ingredients manually above or upload a price list file.
+          </p>
+        </GlassCard>
+      </div>
     );
   }
 
@@ -121,16 +142,29 @@ export default function PriceList() {
         />
       </div>
 
-      {/* Price List Table */}
+      {/* Manual Entry Form */}
+      <ManualIngredientForm onAdd={addPrice} nextCode={nextCode} />
+
+      {/* Search and Table Header */}
       <GlassCard className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Scale className="h-5 w-5 text-primary" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Scale className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Ingredient Price List</h2>
+              <p className="text-sm text-muted-foreground">
+                {searchQuery ? `${filteredPrices.length} of ${prices.length}` : prices.length} ingredients
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Ingredient Price List</h2>
-            <p className="text-sm text-muted-foreground">{prices.length} ingredients with wastage calculations</p>
-          </div>
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search by code, category, or description..."
+            className="w-full md:w-80"
+          />
         </div>
       </GlassCard>
 
@@ -151,7 +185,7 @@ export default function PriceList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {prices.map((price) => {
+              {filteredPrices.map((price) => {
                 const wastageLevel = (price.wastage_percent || 0) > 10 ? "high" : 
                                      (price.wastage_percent || 0) > 5 ? "medium" : "low";
                 return (

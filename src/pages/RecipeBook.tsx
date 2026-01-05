@@ -1,18 +1,28 @@
+import { useState, useMemo } from "react";
 import { BookOpen, Plus, TrendingUp, Clock, ChefHat } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useRecipes } from "@/hooks/useRecipes";
 import { RecipeList } from "@/components/RecipeList";
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { SearchBar } from "@/components/ui/SearchBar";
 
 export default function RecipeBook() {
+  const [searchQuery, setSearchQuery] = useState("");
   const { recipes, isLoading } = useRecipes();
   const navigate = useNavigate();
 
-  // Calculate metrics
-  const totalRecipes = recipes.length;
-  const advancedRecipes = recipes.filter(r => r.is_advanced).length;
-  const categories = [...new Set(recipes.map(r => r.category))].length;
+  // Filter recipes based on search
+  const filteredRecipes = useMemo(() => {
+    if (!searchQuery.trim()) return recipes;
+    const query = searchQuery.toLowerCase();
+    return recipes.filter(
+      (r) =>
+        r.title.toLowerCase().includes(query) ||
+        r.category.toLowerCase().includes(query) ||
+        (r.description?.toLowerCase().includes(query) ?? false)
+    );
+  }, [recipes, searchQuery]);
 
   if (isLoading) {
     return (
@@ -55,6 +65,11 @@ export default function RecipeBook() {
     );
   }
 
+  // Calculate metrics
+  const totalRecipes = recipes.length;
+  const advancedRecipes = recipes.filter(r => r.is_advanced).length;
+  const categoriesCount = [...new Set(recipes.map(r => r.category))].length;
+
   return (
     <div className="space-y-6">
       {/* Dashboard Metrics */}
@@ -75,19 +90,33 @@ export default function RecipeBook() {
         />
         <MetricCard
           title="Categories"
-          value={categories}
+          value={categoriesCount}
           subtitle="Recipe groups"
           icon={Clock}
         />
       </div>
 
-      {/* Recipe List */}
-      <RecipeList 
-        recipes={recipes} 
-        onRecipeClick={(recipe) => {
-          console.log("View recipe:", recipe.id);
-        }}
+      {/* Search Bar */}
+      <SearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Search recipes by name, category, or description..."
+        className="max-w-md"
       />
+
+      {/* Recipe List */}
+      {filteredRecipes.length === 0 && searchQuery ? (
+        <GlassCard className="p-8 text-center">
+          <p className="text-muted-foreground">No recipes match "{searchQuery}"</p>
+        </GlassCard>
+      ) : (
+        <RecipeList 
+          recipes={filteredRecipes} 
+          onRecipeClick={(recipe) => {
+            console.log("View recipe:", recipe.id);
+          }}
+        />
+      )}
     </div>
   );
 }
